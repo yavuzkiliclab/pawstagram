@@ -1,37 +1,11 @@
 'use strict';
 
-const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'db', 'pawstagram.db');
-const db = new Database(DB_PATH);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = OFF');
-
-// Ensure all columns exist (idempotent)
-const seedMigrations = [
-  "ALTER TABLE users ADD COLUMN city TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN country TEXT DEFAULT 'TR'",
-  "ALTER TABLE users ADD COLUMN language TEXT DEFAULT 'tr'",
-  "ALTER TABLE users ADD COLUMN pet_filter TEXT DEFAULT 'all'",
-  "ALTER TABLE users ADD COLUMN pet_breed TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_birthdate TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_gender TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_color TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_weight TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_neutered INTEGER DEFAULT 0",
-  "ALTER TABLE users ADD COLUMN pet_vaccinated INTEGER DEFAULT 0",
-  "ALTER TABLE users ADD COLUMN pet_blood_type TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_skills TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_likes TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_dislikes TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_favorite_food TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_traits TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_lineage TEXT DEFAULT ''",
-  "ALTER TABLE users ADD COLUMN pet_awards TEXT DEFAULT ''",
-];
-for (const sql of seedMigrations) { try { db.exec(sql); } catch {} }
+// Use database.js so tables + migrations are guaranteed to exist before seeding
+const db = require('./db/database');
+db.pragma('foreign_keys = OFF'); // speed up bulk inserts
 
 // ---------------------------------------------------------------------------
 // Photo helpers — all loremflickr, animal-only
@@ -489,7 +463,9 @@ const USER_TYPES = [
 function clearDatabase() {
   process.stdout.write('Clearing existing data...');
   const tables = ['messages', 'conversations', 'notifications', 'follows', 'comments', 'likes', 'posts', 'users'];
-  for (const t of tables) db.prepare(`DELETE FROM ${t}`).run();
+  for (const t of tables) {
+    try { db.prepare(`DELETE FROM ${t}`).run(); } catch {}
+  }
   try { db.prepare('DELETE FROM sqlite_sequence').run(); } catch {}
   console.log(' done.');
 }
@@ -1018,8 +994,6 @@ function main() {
   console.log('  furry@demo.com    – karamel_pati');
   console.log('  doggo@demo.com    – ruzgar_kopek');
   console.log('\nDone! 🐾');
-
-  db.close();
 }
 
 if (require.main === module) main();
