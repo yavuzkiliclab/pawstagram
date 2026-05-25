@@ -11,4 +11,4 @@ services:
         value: production
       - key: JWT_SECRET
         generateValue: true
-    healthCheckPath: /api/auth/me
+    healthCheckPath: /api/health
