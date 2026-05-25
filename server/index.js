@@ -15,13 +15,15 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cors({
   origin: (origin, cb) => {
+    // No origin = server-to-server or curl
     if (!origin) return cb(null, true);
-    if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
+    // Local dev
+    if (/^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
       return cb(null, true);
     }
-    if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) {
-      return cb(null, true);
-    }
+    // Production: frontend is served from same Express server (same-origin),
+    // but some browsers still send Origin header — allow it
+    if (process.env.NODE_ENV === 'production') return cb(null, true);
     cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -30,6 +32,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// API routes
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
@@ -38,19 +41,20 @@ app.use('/api/notifications', notifRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/stats', statsRoutes);
 
+// Serve built React app in production (must come after API routes)
+if (process.env.NODE_ENV === 'production') {
+  const clientDist = path.join(__dirname, '..', 'client', 'dist');
+  app.use(express.static(clientDist));
+  // SPA fallback — non-API routes serve index.html
+  app.get(/^(?!\/api).*/, (req, res) => {
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
+
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ error: err.message || 'Sunucu hatası' });
 });
-
-// Serve built React app in production
-if (process.env.NODE_ENV === 'production') {
-  const clientDist = path.join(__dirname, '..', 'client', 'dist');
-  app.use(express.static(clientDist));
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(clientDist, 'index.html'));
-  });
-}
 
 app.listen(PORT, () => {
   console.log(`🐾 Pawstagram server → http://localhost:${PORT}`);
