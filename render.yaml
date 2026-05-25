@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: pawstagram
+    name: petcircle
     env: node
     region: oregon
     plan: free

@@ -2,7 +2,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const dbPath = path.join(__dirname, 'db', 'pawstagram.db');
+const dbPath = path.join(__dirname, 'db', 'petcircle.db');
 
 let count = 0;
 try {

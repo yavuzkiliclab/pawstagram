@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { format } from 'timeago.js';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from '../components/Avatar';
 import BackButton from '../components/BackButton';
 import api from '../api/axios';
@@ -10,6 +11,7 @@ import toast from 'react-hot-toast';
 export default function Messages() {
   const { username } = useParams();
   const { user } = useAuth();
+  const { t, language } = useSettings();
   const navigate = useNavigate();
 
   const [conversations, setConversations] = useState([]);
@@ -45,14 +47,10 @@ export default function Messages() {
 
   const loadConversations = async () => {
     try {
-      const token = localStorage.getItem('token');
-      console.log('[Messages] token exists:', !!token);
-      console.log('[Messages] user from context:', user?.id, user?.username);
       const r = await api.get('/messages/conversations');
-      console.log('[Messages] conversations response:', r.status, r.data?.length, 'items', r.data);
       setConversations(r.data || []);
-    } catch (e) {
-      console.error('[Messages] Conversations failed:', e.response?.status, e.response?.data, e.message);
+    } catch {
+      // silent
     } finally {
       setLoadingConvs(false);
     }
@@ -69,8 +67,7 @@ export default function Messages() {
       lastIdRef.current = r.data.messages?.at(-1)?.id || 0;
       loadConversations();
     } catch (e) {
-      toast.error('Konuşma açılamadı');
-      console.error('Open conv failed:', e);
+      toast.error(t('conversationFailed'));
     } finally {
       setLoadingChat(false);
     }
@@ -104,7 +101,7 @@ export default function Messages() {
       lastIdRef.current = r.data.id;
       loadConversations();
     } catch {
-      toast.error('Mesaj gönderilemedi');
+      toast.error(t('messageFailed'));
       setInput(text);
     } finally {
       setSending(false);
@@ -115,15 +112,15 @@ export default function Messages() {
     type === 'cat' ? '🐱' : type === 'dog' ? '🐶' : type === 'bird' ? '🦜' :
     type === 'rabbit' ? '🐰' : type === 'hamster' ? '🐹' : '🐾';
 
+  const locale = language === 'tr' ? 'tr' : 'en';
+
   return (
     <div className="messages-page">
-      {/* Top bar */}
       <div className="messages-topbar">
         <BackButton fallback="/" />
-        <h2 className="page-header">💬 Mesajlar</h2>
+        <h2 className="page-header">💬 {t('messages')}</h2>
       </div>
 
-      {/* Split panels */}
       <div className="messages-panels">
         {/* Left: Conversations list */}
         <div className="conversations-panel">
@@ -131,7 +128,7 @@ export default function Messages() {
             <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
             </svg>
-            Konuşmalar
+            {t('directMessages')}
             {conversations.length > 0 && (
               <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text3)', fontWeight: 400 }}>
                 {conversations.length}
@@ -149,8 +146,8 @@ export default function Messages() {
             {!loadingConvs && conversations.length === 0 && (
               <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text3)' }}>
                 <div style={{ fontSize: 32, marginBottom: 8 }}>💌</div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Henüz konuşma yok</div>
-                <div style={{ fontSize: 12, marginTop: 4 }}>Profil sayfasından mesaj gönder</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{t('noConversations')}</div>
+                <div style={{ fontSize: 12, marginTop: 4 }}>{t('startFromProfile')}</div>
               </div>
             )}
 
@@ -169,13 +166,13 @@ export default function Messages() {
                     </span>
                   </div>
                   <div className="conversation-item-last">
-                    {conv.last_message?.content || '• Konuşmayı başlat'}
+                    {conv.last_message?.content || `• ${t('firstMessage')}`}
                   </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                   {conv.last_message?.created_at && (
                     <span style={{ fontSize: 10, color: 'var(--text3)' }}>
-                      {format(conv.last_message.created_at, 'tr')}
+                      {format(conv.last_message.created_at, locale)}
                     </span>
                   )}
                   {conv.unread_count > 0 && (
@@ -193,15 +190,14 @@ export default function Messages() {
             <div className="chat-empty">
               <div style={{ fontSize: 44, marginBottom: 12 }}>💬</div>
               <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text2)', marginBottom: 6 }}>
-                Bir konuşma seç
+                {t('selectConversation')}
               </div>
               <div style={{ fontSize: 13, color: 'var(--text3)' }}>
-                veya profil sayfasından yeni mesaj gönder
+                {t('newConversationHint')}
               </div>
             </div>
           ) : (
             <>
-              {/* Chat header */}
               <div className="chat-header">
                 <Avatar user={otherUser} size={38} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -220,11 +216,10 @@ export default function Messages() {
                   onClick={() => navigate(`/${otherUser.username}`)}
                   style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '5px 12px', fontSize: 12, color: 'var(--text2)', cursor: 'pointer' }}
                 >
-                  Profil
+                  {t('profileBtn')}
                 </button>
               </div>
 
-              {/* Messages */}
               <div className="chat-messages">
                 {loadingChat ? (
                   <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
@@ -232,7 +227,7 @@ export default function Messages() {
                   </div>
                 ) : messages.length === 0 ? (
                   <div style={{ textAlign: 'center', color: 'var(--text3)', fontSize: 13, marginTop: 24 }}>
-                    İlk mesajı gönder 👋
+                    {t('firstMessage')}
                   </div>
                 ) : (
                   messages.map(msg => {
@@ -251,7 +246,7 @@ export default function Messages() {
                         )}
                         <div className={`chat-msg ${isMine ? 'sent' : 'received'}`}>
                           {msg.content}
-                          <div className="chat-msg-time">{format(msg.created_at, 'tr')}</div>
+                          <div className="chat-msg-time">{format(msg.created_at, locale)}</div>
                         </div>
                       </div>
                     );
@@ -260,12 +255,11 @@ export default function Messages() {
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input */}
               <form className="chat-input-row" onSubmit={sendMessage}>
                 <input
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  placeholder={`${otherUser.username}'e mesaj...`}
+                  placeholder={t('messagePlaceholder')}
                   maxLength={1000}
                   autoFocus
                   disabled={sending}

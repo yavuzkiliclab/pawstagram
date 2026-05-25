@@ -1,11 +1,13 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import BackButton from '../components/BackButton';
 
 export default function NewPost() {
   const navigate = useNavigate();
+  const { t } = useSettings();
   const fileRef = useRef();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -19,8 +21,8 @@ export default function NewPost() {
     if (!f) return;
     const isImage = f.type.startsWith('image/');
     const isVideo = f.type.startsWith('video/');
-    if (!isImage && !isVideo) { toast.error('Sadece resim veya video dosyaları kabul edilir'); return; }
-    if (f.size > 80 * 1024 * 1024) { toast.error('Dosya 80 MB\'dan büyük olamaz'); return; }
+    if (!isImage && !isVideo) { toast.error(t('onlyImagesVideos')); return; }
+    if (f.size > 80 * 1024 * 1024) { toast.error(t('fileTooLarge')); return; }
     setFile(f);
     const reader = new FileReader();
     reader.onload = e => setPreview(e.target.result);
@@ -29,7 +31,7 @@ export default function NewPost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!file) { toast.error('Lütfen bir fotoğraf seç'); return; }
+    if (!file) { toast.error(t('pleaseSelectPhoto')); return; }
     setLoading(true);
     const fd = new FormData();
     fd.append('media', file);
@@ -38,17 +40,17 @@ export default function NewPost() {
     fd.append('location', location);
     try {
       const r = await api.post('/posts', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      toast.success('Gönderi paylaşıldı! 🐾');
+      toast.success(t('postShared'));
       navigate(`/post/${r.data.id}`);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Gönderi paylaşılamadı');
+      toast.error(err.response?.data?.error || t('postFailed'));
     } finally { setLoading(false); }
   };
 
   return (
     <div className="new-post-page">
       <BackButton fallback="/" />
-      <h2 className="page-header">📸 Yeni Gönderi</h2>
+      <h2 className="page-header">{t('newPostTitle')}</h2>
 
       <form onSubmit={handleSubmit}>
         {preview ? (
@@ -56,11 +58,11 @@ export default function NewPost() {
             {file?.type.startsWith('video/') ? (
               <video src={preview} className="upload-preview-video" controls muted />
             ) : (
-              <img src={preview} alt="Önizleme" className="upload-preview" />
+              <img src={preview} alt="preview" className="upload-preview" />
             )}
             {file && (
               <div className="media-type-badge" style={{ position: 'absolute', top: 12, left: 12 }}>
-                {file.type.startsWith('video/') ? '🎬 Video' : '🖼️ Fotoğraf'}
+                {file.type.startsWith('video/') ? '🎬 Video' : '🖼️ Photo'}
               </div>
             )}
             <button type="button" onClick={() => { setFile(null); setPreview(null); }}
@@ -77,36 +79,36 @@ export default function NewPost() {
             onDrop={e => { e.preventDefault(); setDrag(false); handleFile(e.dataTransfer.files[0]); }}
           >
             <div className="upload-icon">🐾</div>
-            <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 15 }}>Fotoğraf veya video seç ya da sürükle bırak</div>
-            <div style={{ fontSize: 13, color: 'var(--text3)' }}>PNG, JPG, GIF, WEBP, MP4, WEBM · Maks 80 MB</div>
+            <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 15 }}>{t('dragDropSelect')}</div>
+            <div style={{ fontSize: 13, color: 'var(--text3)' }}>{t('maxFileSize')}</div>
             <input ref={fileRef} type="file" accept="image/*,video/*" style={{ display: 'none' }} onChange={e => handleFile(e.target.files[0])} />
           </div>
         )}
 
         <div className="auth-form">
           <div className="form-group">
-            <label>Evcil Hayvanının Adı</label>
-            <input className="form-input" value={petName} onChange={e => setPetName(e.target.value)} placeholder="Pamuk, Max, Boncuk..." maxLength={50} />
+            <label>{t('petNameLabel')}</label>
+            <input className="form-input" value={petName} onChange={e => setPetName(e.target.value)} placeholder={t('petNamePlaceholder')} maxLength={50} />
           </div>
 
           <div className="form-group">
-            <label>📍 Konum Etiketi</label>
+            <label>{t('locationTag')}</label>
             <input
               className="form-input"
               value={location}
               onChange={e => setLocation(e.target.value)}
-              placeholder="İstanbul, Kalamış Parkı..."
+              placeholder={t('locationTagPlaceholder')}
               maxLength={80}
             />
           </div>
 
           <div className="form-group">
-            <label>Açıklama</label>
+            <label>{t('captionLabel')}</label>
             <textarea
               className="form-input"
               value={caption}
               onChange={e => setCaption(e.target.value)}
-              placeholder="Hayvanın hakkında bir şeyler yaz... 🐾"
+              placeholder={t('captionPlaceholder2')}
               rows={3} maxLength={500}
               style={{ resize: 'vertical' }}
             />
@@ -114,7 +116,7 @@ export default function NewPost() {
           </div>
 
           <button type="submit" className="btn-primary" disabled={!file || loading}>
-            {loading ? 'Paylaşılıyor...' : file?.type.startsWith('video/') ? '🎬 Videoyu Paylaş' : '🐾 Fotoğrafı Paylaş'}
+            {loading ? t('sharing') : file?.type.startsWith('video/') ? t('sharingVideo') : t('sharingPhoto')}
           </button>
         </div>
       </form>

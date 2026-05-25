@@ -57,7 +57,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🐾 Pawstagram server → http://localhost:${PORT}`);
+  console.log(`🐾 PetCircle server → http://localhost:${PORT}`);
 
   // Seed demo data in background if DB is empty — doesn't block startup
   try {

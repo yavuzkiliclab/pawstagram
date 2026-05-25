@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import api from '../api/axios';
 
 export default function StoriesRow() {
   const { user } = useAuth();
+  const { t } = useSettings();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
 
@@ -25,7 +27,7 @@ export default function StoriesRow() {
         <div className="story-ring new-post-ring">
           <div className="story-inner" style={{ fontSize: 26, background: 'var(--bg3)' }}>+</div>
         </div>
-        <span className="story-label" style={{ color: 'var(--pink)', fontWeight: 600 }}>Gönderi</span>
+        <span className="story-label" style={{ color: 'var(--pink)', fontWeight: 600 }}>{t('newPost')}</span>
       </div>
 
       {/* Followed users */}

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { format } from 'timeago.js';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from './Avatar';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 
 export default function Post({ post: initialPost, onDelete }) {
   const { user } = useAuth();
+  const { t, language } = useSettings();
   const navigate = useNavigate();
   const [post, setPost] = useState(initialPost);
   const [comment, setComment] = useState('');
@@ -31,7 +33,6 @@ export default function Post({ post: initialPost, onDelete }) {
   const petIcon = post.pet_type === 'cat' ? '🐱' : post.pet_type === 'dog' ? '🐶' : '🐾';
 
   const handleLike = async () => {
-    // Optimistic update
     const wasLiked = post.liked;
     setPost(p => ({ ...p, liked: !p.liked, like_count: p.liked ? p.like_count - 1 : p.like_count + 1 }));
     try {
@@ -51,18 +52,20 @@ export default function Post({ post: initialPost, onDelete }) {
       setPost(p => ({ ...p, comment_count: p.comment_count + 1 }));
       setComment('');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Hata oluştu');
+      toast.error(err.response?.data?.error || t('errorOccurred'));
     } finally { setSubmitting(false); }
   };
 
   const handleDelete = async () => {
-    if (!confirm('Bu gönderiyi silmek istiyor musun?')) return;
+    if (!confirm(t('deletePostConfirm'))) return;
     try {
       await api.delete(`/posts/${post.id}`);
-      toast.success('Gönderi silindi');
+      toast.success(t('postDeleted'));
       onDelete?.(post.id);
-    } catch { toast.error('Silinemedi'); }
+    } catch { toast.error(t('deleteFailed')); }
   };
+
+  const locale = language === 'tr' ? 'tr' : 'en';
 
   return (
     <article className="post-card">
@@ -73,7 +76,7 @@ export default function Post({ post: initialPost, onDelete }) {
         <div className="post-user-info">
           <Link to={`/${post.username}`} className="post-username">{post.username}</Link>
           <div className="post-meta">
-            <span className="post-pet-tag">{petIcon} {post.pet_name || 'Tatlı hayvan'}</span>
+            <span className="post-pet-tag">{petIcon} {post.pet_name || t('myPet')}</span>
             {post.location && (
               <>
                 <span style={{ color: 'var(--border2)', fontSize: 10 }}>·</span>
@@ -85,7 +88,7 @@ export default function Post({ post: initialPost, onDelete }) {
             )}
           </div>
         </div>
-        <span className="post-time">{format(post.created_at, 'tr')}</span>
+        <span className="post-time">{format(post.created_at, locale)}</span>
         {user?.id === post.user_id && (
           <button onClick={handleDelete} style={{ background: 'none', border: 'none', color: 'var(--text3)', padding: '4px 6px', borderRadius: 8, transition: 'color 0.2s' }}
             onMouseEnter={e => e.target.style.color = '#FF3D9A'}
@@ -111,7 +114,7 @@ export default function Post({ post: initialPost, onDelete }) {
         ) : (
           <img
             src={post.image_url}
-            alt={post.caption || 'Evcil hayvan'}
+            alt={post.caption || t('myPet')}
             className="post-image"
             loading="lazy"
             onClick={() => navigate(`/post/${post.id}`)}
@@ -132,7 +135,7 @@ export default function Post({ post: initialPost, onDelete }) {
           </svg>
           <span>{post.comment_count}</span>
         </button>
-        <button className={`action-btn post-actions-save${saved ? ' liked' : ''}`} onClick={handleSave} title={saved ? 'Kaydedildi' : 'Kaydet'}>
+        <button className={`action-btn post-actions-save${saved ? ' liked' : ''}`} onClick={handleSave} title={saved ? t('saved') : t('save')}>
           <svg fill={saved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
           </svg>
@@ -146,7 +149,9 @@ export default function Post({ post: initialPost, onDelete }) {
       )}
       {post.comment_count > 0 && (
         <div className="post-comment-count" onClick={() => navigate(`/post/${post.id}`)}>
-          {post.comment_count} yorumu gör
+          {language === 'tr'
+            ? `${post.comment_count} yorumu gör`
+            : `View ${post.comment_count} comment${post.comment_count !== 1 ? 's' : ''}`}
         </div>
       )}
 
@@ -155,11 +160,11 @@ export default function Post({ post: initialPost, onDelete }) {
         <input
           value={comment}
           onChange={e => setComment(e.target.value)}
-          placeholder="Yorum ekle..."
+          placeholder={t('addComment')}
           maxLength={300}
         />
         <button type="submit" className="post-comment-submit" disabled={!comment.trim() || submitting}>
-          Paylaş
+          {t('postCommentBtn')}
         </button>
       </form>
     </article>

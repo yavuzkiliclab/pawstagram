@@ -1,18 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 import FilterBar from '../components/FilterBar';
 import BackButton from '../components/BackButton';
 import api from '../api/axios';
 
-const PERIODS = [
-  { value: 'day', label: '24 Saat' },
-  { value: 'week', label: 'Bu Hafta' },
-  { value: 'month', label: 'Bu Ay' },
-  { value: 'all', label: 'Tüm Zamanlar' },
-];
-
 export default function Trending() {
   const navigate = useNavigate();
+  const { t } = useSettings();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('week');
@@ -20,6 +15,13 @@ export default function Trending() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  const PERIODS = [
+    { value: 'day', labelKey: 'period24h' },
+    { value: 'week', labelKey: 'periodWeek' },
+    { value: 'month', labelKey: 'periodMonth' },
+    { value: 'all', labelKey: 'periodAll' },
+  ];
 
   useEffect(() => { fetchTrending(1, true); }, [period, petFilter]);
 
@@ -52,12 +54,12 @@ export default function Trending() {
       <div className="page-container-left" />
       <div className="trending-page page-container-span">
       <BackButton fallback="/" />
-      <h2 className="page-header">🔥 En Çok Beğenilenler</h2>
+      <h2 className="page-header">{t('trendingTitle')}</h2>
 
       <div className="trending-header">
         {PERIODS.map(p => (
           <button key={p.value} className={`period-pill ${period === p.value ? 'active' : ''}`} onClick={() => setPeriod(p.value)}>
-            {p.label}
+            {t(p.labelKey)}
           </button>
         ))}
       </div>
@@ -69,8 +71,8 @@ export default function Trending() {
       ) : posts.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">🏆</div>
-          <div className="empty-text">Bu dönemde gönderi yok</div>
-          <div className="empty-sub">Daha uzun bir dönem seç ya da fotoğraf paylaş!</div>
+          <div className="empty-text">{t('noPostsThisPeriod')}</div>
+          <div className="empty-sub">{t('tryLongerPeriod')}</div>
         </div>
       ) : (
         <>
@@ -96,7 +98,7 @@ export default function Trending() {
           {hasMore && (
             <div className="load-more-wrap">
               <button className="btn-load-more" onClick={() => fetchTrending(page + 1)} disabled={loadingMore}>
-                {loadingMore ? 'Yükleniyor...' : 'Daha fazla'}
+                {loadingMore ? t('loading') : t('loadMoreBtn')}
               </button>
             </div>
           )}

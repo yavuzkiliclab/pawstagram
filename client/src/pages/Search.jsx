@@ -1,25 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from '../components/Avatar';
 import api from '../api/axios';
 import BackButton from '../components/BackButton';
 
-const PET_FILTERS = [
-  { label: 'Tümü', value: 'all' },
-  { label: '🐱 Kedi', value: 'cat' },
-  { label: '🐶 Köpek', value: 'dog' },
-  { label: '🐾 Diğer', value: 'other' },
-];
-
-const TYPE_FILTERS = [
-  { label: 'Hepsi', value: 'all' },
-  { label: '👤 Kullanıcılar', value: 'users' },
-  { label: '📸 Gönderiler', value: 'posts' },
-];
-
 export default function Search() {
   const navigate = useNavigate();
+  const { t } = useSettings();
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [type, setType] = useState(searchParams.get('type') || 'all');
@@ -31,6 +20,19 @@ export default function Search() {
   const [searched, setSearched] = useState(false);
   const debounceRef = useRef(null);
   const inputRef = useRef(null);
+
+  const PET_FILTERS = [
+    { label: t('all'), value: 'all' },
+    { label: `🐱 ${t('cat')}`, value: 'cat' },
+    { label: `🐶 ${t('dog')}`, value: 'dog' },
+    { label: `🐾 ${t('other')}`, value: 'other' },
+  ];
+
+  const TYPE_FILTERS = [
+    { label: t('allLabel'), value: 'all' },
+    { label: `👤 ${t('usersLabel')}`, value: 'users' },
+    { label: `📸 ${t('postsLabel')}`, value: 'posts' },
+  ];
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -47,19 +49,19 @@ export default function Search() {
     return () => clearTimeout(debounceRef.current);
   }, [query, type, petType, location]);
 
-  const doSearch = async (q, t, pet, loc) => {
+  const doSearch = async (q, tp, pet, loc) => {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
-    setSearchParams({ q, type: t, pet_type: pet, location: loc });
+    setSearchParams({ q, type: tp, pet_type: pet, location: loc });
     try {
       const promises = [];
-      if (t === 'all' || t === 'users') {
+      if (tp === 'all' || tp === 'users') {
         promises.push(api.get(`/users/search?q=${encodeURIComponent(q)}&pet_type=${pet}`));
       } else {
         promises.push(Promise.resolve({ data: [] }));
       }
-      if (t === 'all' || t === 'posts') {
+      if (tp === 'all' || tp === 'posts') {
         const locParam = loc ? `&location=${encodeURIComponent(loc)}` : '';
         promises.push(api.get(`/posts/search?q=${encodeURIComponent(q)}&pet_type=${pet}${locParam}`));
       } else {
@@ -93,7 +95,7 @@ export default function Search() {
               ref={inputRef}
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="Kullanıcı, gönderi, konum veya hayvan türü ara..."
+              placeholder={t('searchBigPlaceholder')}
               autoComplete="off"
             />
             {query && (
@@ -132,7 +134,7 @@ export default function Search() {
               <input
                 value={location}
                 onChange={e => setLocation(e.target.value)}
-                placeholder="Konuma göre filtrele (İstanbul, Ankara...)"
+                placeholder={t('filterByLocation')}
                 style={{ background: 'none', border: 'none', outline: 'none', color: 'var(--text)', fontSize: 13, flex: 1 }}
               />
             </div>
@@ -145,14 +147,14 @@ export default function Search() {
       {!loading && searched && total === 0 && (
         <div className="search-no-results">
           <div style={{ fontSize: 36, marginBottom: 12 }}>🔍</div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text2)', marginBottom: 6 }}>Sonuç bulunamadı</div>
-          <div style={{ fontSize: 13, color: 'var(--text3)' }}>"{query}" için hiçbir şey bulamadık. Farklı bir arama deneyin.</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text2)', marginBottom: 6 }}>{t('noResults')}</div>
+          <div style={{ fontSize: 13, color: 'var(--text3)' }}>"{query}" {t('noResultsFor')}</div>
         </div>
       )}
 
       {!loading && users.length > 0 && (
         <div className="search-results-section">
-          <div className="search-section-title">Kullanıcılar ({users.length})</div>
+          <div className="search-section-title">{t('usersLabel')} ({users.length})</div>
           {users.map(u => (
             <div key={u.id} className="search-user-result" onClick={() => navigate(`/${u.username}`)}>
               <Avatar user={u} size={46} />
@@ -167,7 +169,7 @@ export default function Search() {
                 className="btn-follow"
                 onClick={e => { e.stopPropagation(); navigate(`/${u.username}`); }}
               >
-                Profil
+                {t('profileBtn')}
               </button>
             </div>
           ))}
@@ -176,7 +178,7 @@ export default function Search() {
 
       {!loading && posts.length > 0 && (
         <div className="search-results-section">
-          <div className="search-section-title">Gönderiler ({posts.length})</div>
+          <div className="search-section-title">{t('postsLabel')} ({posts.length})</div>
           <div className="search-posts-grid">
             {posts.map(post => (
               <div key={post.id} style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden', cursor: 'pointer' }}
@@ -200,11 +202,6 @@ export default function Search() {
                     </div>
                   )}
                 </div>
-                {post.location && (
-                  <div style={{ position: 'absolute', bottom: 6, left: 6, background: 'rgba(0,0,0,0.5)', borderRadius: 6, padding: '2px 6px', fontSize: 10, color: 'white', display: 'flex', alignItems: 'center', gap: 3 }}>
-                    📍 {post.location}
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -214,8 +211,8 @@ export default function Search() {
       {!searched && (
         <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text3)' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text2)', marginBottom: 8 }}>Gelişmiş Arama</div>
-          <div style={{ fontSize: 13 }}>Kullanıcı adı, gönderi açıklaması, konum veya hayvan türüne göre ara</div>
+          <div style={{ fontWeight: 700, fontSize: 16, color: 'var(--text2)', marginBottom: 8 }}>{t('advancedSearch')}</div>
+          <div style={{ fontSize: 13 }}>{t('advancedSearchDesc')}</div>
         </div>
       )}
     </div>

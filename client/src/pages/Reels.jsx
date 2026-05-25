@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from '../components/Avatar';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import BackButton from '../components/BackButton';
 
 export default function Reels() {
+  const { t } = useSettings();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -161,7 +163,7 @@ function ReelItem({ post, onLike, onNearEnd }) {
               <line x1="22" y1="2" x2="11" y2="13"/>
               <polygon points="22 2 15 22 11 13 2 9 22 2"/>
             </svg>
-            <span className="reel-action-count">Paylaş</span>
+            <span className="reel-action-count">{t('send')}</span>
           </button>
           <div className="reel-action-btn" style={{ cursor: 'default' }} onClick={() => navigate(`/${post.username}`)}>
             <div style={{ width: 34, height: 34, borderRadius: '50%', border: '2px solid white', overflow: 'hidden', background: '#333' }}>

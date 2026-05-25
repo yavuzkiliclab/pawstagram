@@ -1,22 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from '../components/Avatar';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import BackButton from '../components/BackButton';
 
-function calcAge(birthdate) {
+function calcAge(birthdate, language) {
   if (!birthdate) return null;
   const bd = new Date(birthdate);
   const now = new Date();
   const years = now.getFullYear() - bd.getFullYear();
   const months = now.getMonth() - bd.getMonth();
   const totalMonths = years * 12 + months;
-  if (totalMonths < 12) return `${totalMonths} ay`;
-  const y = Math.floor(totalMonths / 12);
-  const m = totalMonths % 12;
-  return m > 0 ? `${y} yıl ${m} ay` : `${y} yıl`;
+  if (language === 'tr') {
+    if (totalMonths < 12) return `${totalMonths} ay`;
+    const y = Math.floor(totalMonths / 12);
+    const m = totalMonths % 12;
+    return m > 0 ? `${y} yıl ${m} ay` : `${y} yıl`;
+  } else {
+    if (totalMonths < 12) return `${totalMonths} mo`;
+    const y = Math.floor(totalMonths / 12);
+    const m = totalMonths % 12;
+    return m > 0 ? `${y}y ${m}mo` : `${y}y`;
+  }
 }
 
 function splitPipe(str) {
@@ -24,14 +32,15 @@ function splitPipe(str) {
   return str.split('|').map(s => s.trim()).filter(Boolean);
 }
 
-function PetIdentityCard({ profile }) {
+function PetIdentityCard({ profile, t, language }) {
   const icon = profile.pet_type === 'cat' ? '🐱' : profile.pet_type === 'dog' ? '🐶' : '🐾';
-  const age = calcAge(profile.pet_birthdate);
+  const age = calcAge(profile.pet_birthdate, language);
   const traits = splitPipe(profile.pet_traits);
   const skills = splitPipe(profile.pet_skills);
   const likes = splitPipe(profile.pet_likes);
   const dislikes = splitPipe(profile.pet_dislikes);
   const awards = splitPipe(profile.pet_awards);
+  const locale = language === 'tr' ? 'tr-TR' : 'en-US';
 
   return (
     <div className="pet-id-card">
@@ -47,37 +56,37 @@ function PetIdentityCard({ profile }) {
         {age && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">{age}</div>
-            <div className="pet-id-stat-label">Yaş</div>
+            <div className="pet-id-stat-label">{t('age')}</div>
           </div>
         )}
         {profile.pet_gender && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">{profile.pet_gender === 'Erkek' ? '♂️' : '♀️'} {profile.pet_gender}</div>
-            <div className="pet-id-stat-label">Cinsiyet</div>
+            <div className="pet-id-stat-label">{t('gender')}</div>
           </div>
         )}
         {profile.pet_color && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">{profile.pet_color}</div>
-            <div className="pet-id-stat-label">Renk</div>
+            <div className="pet-id-stat-label">{t('color')}</div>
           </div>
         )}
         {profile.pet_weight && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">{profile.pet_weight}</div>
-            <div className="pet-id-stat-label">Ağırlık</div>
+            <div className="pet-id-stat-label">{t('weight')}</div>
           </div>
         )}
         {profile.pet_blood_type && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">{profile.pet_blood_type}</div>
-            <div className="pet-id-stat-label">Kan Grubu</div>
+            <div className="pet-id-stat-label">{t('bloodType')}</div>
           </div>
         )}
         {profile.city && (
           <div className="pet-id-stat">
             <div className="pet-id-stat-val">📍 {profile.city}</div>
-            <div className="pet-id-stat-label">Şehir</div>
+            <div className="pet-id-stat-label">{t('city')}</div>
           </div>
         )}
       </div>
@@ -85,17 +94,17 @@ function PetIdentityCard({ profile }) {
       {(profile.pet_neutered !== undefined || profile.pet_vaccinated !== undefined) && (
         <div className="pet-id-health">
           <span className={`pet-id-health-badge ${profile.pet_neutered ? 'yes' : 'no'}`}>
-            {profile.pet_neutered ? '✓' : '✗'} Kısırlaştırılmış
+            {profile.pet_neutered ? '✓' : '✗'} {language === 'tr' ? 'Kısırlaştırılmış' : 'Neutered'}
           </span>
           <span className={`pet-id-health-badge ${profile.pet_vaccinated ? 'yes' : 'no'}`}>
-            {profile.pet_vaccinated ? '✓' : '✗'} Aşılı
+            {profile.pet_vaccinated ? '✓' : '✗'} {language === 'tr' ? 'Aşılı' : 'Vaccinated'}
           </span>
         </div>
       )}
 
       {traits.length > 0 && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">✨ Karakter</div>
+          <div className="pet-id-section-title">✨ {language === 'tr' ? 'Karakter' : 'Personality'}</div>
           <div className="pet-id-tags">
             {traits.map(t => <span key={t} className="pet-id-tag pet-id-trait">{t}</span>)}
           </div>
@@ -104,7 +113,7 @@ function PetIdentityCard({ profile }) {
 
       {skills.length > 0 && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">🎯 Yetenekler</div>
+          <div className="pet-id-section-title">🎯 {language === 'tr' ? 'Yetenekler' : 'Skills'}</div>
           <div className="pet-id-tags">
             {skills.map(s => <span key={s} className="pet-id-tag pet-id-skill">{s}</span>)}
           </div>
@@ -113,7 +122,7 @@ function PetIdentityCard({ profile }) {
 
       {(likes.length > 0 || dislikes.length > 0) && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">❤️ Sevdiği & Sevmediği</div>
+          <div className="pet-id-section-title">❤️ {language === 'tr' ? 'Sevdiği & Sevmediği' : 'Likes & Dislikes'}</div>
           <div className="pet-id-tags">
             {likes.map(l => <span key={l} className="pet-id-tag pet-id-like">{l}</span>)}
             {dislikes.map(d => <span key={d} className="pet-id-tag pet-id-dislike">{d}</span>)}
@@ -123,21 +132,21 @@ function PetIdentityCard({ profile }) {
 
       {profile.pet_favorite_food && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">🍽️ En Sevdiği Yemek</div>
+          <div className="pet-id-section-title">🍽️ {language === 'tr' ? 'En Sevdiği Yemek' : 'Favorite Food'}</div>
           <div style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{profile.pet_favorite_food}</div>
         </div>
       )}
 
       {profile.pet_lineage && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">🏛️ Soy Bilgisi</div>
+          <div className="pet-id-section-title">🏛️ {language === 'tr' ? 'Soy Bilgisi' : 'Lineage'}</div>
           <div style={{ fontSize: 13, color: 'var(--text2)' }}>{profile.pet_lineage}</div>
         </div>
       )}
 
       {awards.length > 0 && (
         <div className="pet-id-section">
-          <div className="pet-id-section-title">🏆 Ödüller</div>
+          <div className="pet-id-section-title">🏆 {language === 'tr' ? 'Ödüller' : 'Awards'}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {awards.map(a => (
               <div key={a} className="pet-id-award">🥇 {a}</div>
@@ -149,7 +158,7 @@ function PetIdentityCard({ profile }) {
       {profile.pet_birthdate && (
         <div className="pet-id-section" style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
           <div style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center' }}>
-            🎂 Doğum: {new Date(profile.pet_birthdate).toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })}
+            🎂 {language === 'tr' ? 'Doğum' : 'Born'}: {new Date(profile.pet_birthdate).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' })}
           </div>
         </div>
       )}
@@ -160,6 +169,7 @@ function PetIdentityCard({ profile }) {
 export default function Profile() {
   const { username } = useParams();
   const { user: me } = useAuth();
+  const { t, language } = useSettings();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -208,19 +218,19 @@ export default function Profile() {
     } catch {}
   };
 
-  const handleTab = (t) => {
-    setTab(t);
-    if (t === 'followers') fetchFollowers();
-    if (t === 'following') fetchFollowing();
+  const handleTab = (tabId) => {
+    setTab(tabId);
+    if (tabId === 'followers') fetchFollowers();
+    if (tabId === 'following') fetchFollowing();
   };
 
   const handleFollow = async () => {
     try {
       const r = await api.post(`/users/${username}/follow`);
       setProfile(p => ({ ...p, is_following: r.data.is_following, follower_count: r.data.follower_count }));
-      toast.success(r.data.is_following ? `${username} takip ediliyor` : 'Takip bırakıldı');
+      toast.success(r.data.is_following ? `${username} ${t('following')}` : language === 'tr' ? 'Takip bırakıldı' : 'Unfollowed');
     } catch {
-      toast.error('İşlem başarısız');
+      toast.error(language === 'tr' ? 'İşlem başarısız' : 'Action failed');
     }
   };
 
@@ -233,13 +243,19 @@ export default function Profile() {
 
   const coverTag = profile.pet_type === 'cat' ? 'cat,kitten' : profile.pet_type === 'dog' ? 'dog,puppy' : profile.pet_type === 'bird' ? 'parrot' : profile.pet_type === 'rabbit' ? 'rabbit' : profile.pet_type === 'hamster' ? 'hamster' : 'pet,animal';
 
+  const tabs = [
+    { id: 'posts', icon: '⊞', label: t('posts') },
+    ...(hasPetDetails ? [{ id: 'pet', icon: petIcon, label: t('petId') }] : []),
+    { id: 'followers', icon: '👥', label: t('followers') },
+    { id: 'following', icon: '👣', label: t('followingLabel') },
+  ];
+
   return (
     <div className="page-container">
       <div className="page-container-left" />
       <div className="profile-page page-container-span">
       <BackButton fallback="/" />
 
-      {/* Cover photo banner */}
       <div
         className="profile-cover-banner"
         style={{ backgroundImage: `url(https://loremflickr.com/1200/300/${coverTag}?lock=${profile.id * 7})` }}
@@ -263,7 +279,7 @@ export default function Profile() {
             <span className="profile-username">{profile.username}</span>
             {isMe ? (
               <Link to="/profile/edit">
-                <button className="btn-edit-profile">Profili Düzenle</button>
+                <button className="btn-edit-profile">{t('editProfile')}</button>
               </Link>
             ) : (
               <>
@@ -271,14 +287,14 @@ export default function Profile() {
                   className={`btn-follow-profile ${profile.is_following ? 'following' : ''}`}
                   onClick={handleFollow}
                 >
-                  {profile.is_following ? 'Takip Ediliyor' : 'Takip Et'}
+                  {profile.is_following ? t('following') : t('follow')}
                 </button>
                 <Link to={`/messages/${profile.username}`}>
                   <button className="btn-edit-profile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                     </svg>
-                    Mesaj
+                    {t('sendMessage')}
                   </button>
                 </Link>
               </>
@@ -288,15 +304,15 @@ export default function Profile() {
           <div className="profile-stats">
             <div className="profile-stat" style={{ cursor: 'pointer' }} onClick={() => handleTab('posts')}>
               <div className="profile-stat-num">{profile.post_count}</div>
-              <div className="profile-stat-label">Gönderi</div>
+              <div className="profile-stat-label">{t('posts')}</div>
             </div>
             <div className="profile-stat" style={{ cursor: 'pointer' }} onClick={() => handleTab('followers')}>
               <div className="profile-stat-num">{profile.follower_count}</div>
-              <div className="profile-stat-label">Takipçi</div>
+              <div className="profile-stat-label">{t('followers')}</div>
             </div>
             <div className="profile-stat" style={{ cursor: 'pointer' }} onClick={() => handleTab('following')}>
               <div className="profile-stat-num">{profile.following_count}</div>
-              <div className="profile-stat-label">Takip</div>
+              <div className="profile-stat-label">{t('followingLabel')}</div>
             </div>
           </div>
 
@@ -315,23 +331,18 @@ export default function Profile() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 16 }}>
-        {[
-          { id: 'posts', icon: '⊞', label: 'Gönderiler' },
-          ...(hasPetDetails ? [{ id: 'pet', icon: petIcon, label: 'Kimlik Kartı' }] : []),
-          { id: 'followers', icon: '👥', label: 'Takipçiler' },
-          { id: 'following', icon: '👣', label: 'Takip' },
-        ].map(t => (
-          <button key={t.id} onClick={() => handleTab(t.id)}
+        {tabs.map(tb => (
+          <button key={tb.id} onClick={() => handleTab(tb.id)}
             style={{
               flex: 1, padding: '12px', background: 'none', border: 'none',
-              borderBottom: tab === t.id ? '2px solid var(--pink)' : '2px solid transparent',
-              color: tab === t.id ? 'var(--pink)' : 'var(--text3)',
-              fontWeight: tab === t.id ? 600 : 400, fontSize: 13,
+              borderBottom: tab === tb.id ? '2px solid var(--pink)' : '2px solid transparent',
+              color: tab === tb.id ? 'var(--pink)' : 'var(--text3)',
+              fontWeight: tab === tb.id ? 600 : 400, fontSize: 13,
               cursor: 'pointer', display: 'flex', alignItems: 'center',
               justifyContent: 'center', gap: 6
             }}
           >
-            <span>{t.icon}</span>{t.label}
+            <span>{tb.icon}</span>{tb.label}
           </button>
         ))}
       </div>
@@ -340,8 +351,8 @@ export default function Profile() {
         posts.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📷</div>
-            <div className="empty-text">Henüz gönderi yok</div>
-            {isMe && <Link to="/new"><button className="btn-primary" style={{ marginTop: 12 }}>İlk gönderini paylaş</button></Link>}
+            <div className="empty-text">{t('noPosts')}</div>
+            {isMe && <Link to="/new"><button className="btn-primary" style={{ marginTop: 12 }}>{t('sharingPhoto')}</button></Link>}
           </div>
         ) : (
           <div className="profile-posts-grid">
@@ -375,20 +386,20 @@ export default function Profile() {
         )
       )}
 
-      {tab === 'pet' && <PetIdentityCard profile={profile} />}
+      {tab === 'pet' && <PetIdentityCard profile={profile} t={t} language={language} />}
 
-      {tab === 'followers' && <UserList users={followers} />}
+      {tab === 'followers' && <UserList users={followers} t={t} />}
 
-      {tab === 'following' && <UserList users={following} />}
+      {tab === 'following' && <UserList users={following} t={t} />}
       </div>
     </div>
   );
 }
 
-function UserList({ users }) {
+function UserList({ users, t }) {
   const navigate = useNavigate();
   if (users.length === 0) {
-    return <div className="empty-state"><div className="empty-icon">👻</div><div className="empty-text">Kimse yok</div></div>;
+    return <div className="empty-state"><div className="empty-icon">👻</div><div className="empty-text">{t('noPostsFound')}</div></div>;
   }
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

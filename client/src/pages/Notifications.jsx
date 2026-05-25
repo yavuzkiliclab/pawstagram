@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'timeago.js';
+import { useSettings } from '../context/SettingsContext';
 import Avatar from '../components/Avatar';
 import BackButton from '../components/BackButton';
 import api from '../api/axios';
 
 export default function Notifications() {
   const navigate = useNavigate();
+  const { t, language } = useSettings();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,23 +36,25 @@ export default function Notifications() {
   };
 
   const typeInfo = (type) => {
-    if (type === 'like') return { icon: '❤️', cls: 'like', text: 'gönderini beğendi' };
-    if (type === 'comment') return { icon: '💬', cls: 'comment', text: 'gönderine yorum yaptı' };
-    if (type === 'follow') return { icon: '🐾', cls: 'follow', text: 'seni takip etmeye başladı' };
-    return { icon: '🔔', cls: 'follow', text: 'bir şey yaptı' };
+    if (type === 'like') return { icon: '❤️', cls: 'like', text: t('notifLiked') };
+    if (type === 'comment') return { icon: '💬', cls: 'comment', text: t('notifCommented') };
+    if (type === 'follow') return { icon: '🐾', cls: 'follow', text: t('notifFollowed') };
+    return { icon: '🔔', cls: 'follow', text: t('notifAction') };
   };
+
+  const locale = language === 'tr' ? 'tr' : 'en';
 
   return (
     <div className="notifications-page">
       <BackButton fallback="/" />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 22 }}>
-        <h2 className="page-header" style={{ marginBottom: 0 }}>Bildirimler</h2>
+        <h2 className="page-header" style={{ marginBottom: 0 }}>{t('notificationsTitle')}</h2>
         {notifications.length > 0 && (
           <button
             onClick={async () => { await Promise.all(notifications.map(n => api.delete(`/notifications/${n.id}`))); setNotifications([]); }}
             style={{ background: 'none', borderRadius: 8, border: '1px solid var(--border2)', color: 'var(--text3)', fontSize: 13, cursor: 'pointer', padding: '6px 12px' }}
           >
-            Tümünü temizle
+            {t('clearAll')}
           </button>
         )}
       </div>
@@ -60,8 +64,8 @@ export default function Notifications() {
       ) : notifications.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">🔔</div>
-          <div className="empty-text">Bildirim yok</div>
-          <div className="empty-sub">Birileri seni beğendiğinde burada görünür</div>
+          <div className="empty-text">{t('noNotifications')}</div>
+          <div className="empty-sub">{t('notifAppear')}</div>
         </div>
       ) : (
         <div>
@@ -79,7 +83,7 @@ export default function Notifications() {
                     <img src={n.post_image} alt="" className="notif-post-thumb" />
                   )}
                   <div>
-                    <div className="notif-time">{format(n.created_at, 'tr')}</div>
+                    <div className="notif-time">{format(n.created_at, locale)}</div>
                     {!n.read && <div className="notif-unread-dot" style={{ margin: '4px auto 0' }} />}
                   </div>
                   <button

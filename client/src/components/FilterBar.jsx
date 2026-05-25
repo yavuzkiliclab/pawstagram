@@ -1,11 +1,14 @@
+import { useSettings } from '../context/SettingsContext';
+
 export default function FilterBar({ value, onChange }) {
+  const { t } = useSettings();
   const filters = [
-    { value: 'all',    label: 'Tümü',      icon: '🐾' },
-    { value: 'cat',    label: 'Kediler',    icon: '🐱' },
-    { value: 'dog',    label: 'Köpekler',   icon: '🐶' },
-    { value: 'bird',   label: 'Kuşlar',     icon: '🦜' },
-    { value: 'rodent', label: 'Kemirgenler',icon: '🐹' },
-    { value: 'other',  label: 'Diğer',      icon: '🐠' },
+    { value: 'all',    key: 'all',     icon: '🐾' },
+    { value: 'cat',    key: 'cats',    icon: '🐱' },
+    { value: 'dog',    key: 'dogs',    icon: '🐶' },
+    { value: 'bird',   key: 'birds',   icon: '🦜' },
+    { value: 'rodent', key: 'rodents', icon: '🐹' },
+    { value: 'other',  key: 'other',   icon: '🐠' },
   ];
   return (
     <div className="filter-bar">
@@ -16,7 +19,7 @@ export default function FilterBar({ value, onChange }) {
           onClick={() => onChange(f.value)}
         >
           <span>{f.icon}</span>
-          <span>{f.label}</span>
+          <span>{t(f.key)}</span>
         </button>
       ))}
     </div>

@@ -180,7 +180,7 @@ export default function Feed() {
         {/* Trending hashtags */}
         {trendingTags.length > 0 && (
           <div className="feed-right-section">
-            <div className="feed-right-section-title">🔥 Trend Etiketler</div>
+            <div className="feed-right-section-title">{t('trendingTags')}</div>
             <div className="feed-right-tags">
               {trendingTags.map(tag => (
                 <Link key={tag.tag} to={`/explore?tag=${encodeURIComponent(tag.tag)}`} className="feed-right-tag">
@@ -195,7 +195,7 @@ export default function Feed() {
         {/* Nearby users */}
         {nearby.length > 0 && (
           <div className="feed-right-section">
-            <div className="feed-right-section-title">📍 Yakınındakiler</div>
+            <div className="feed-right-section-title">{t('nearbyUsers')}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {nearby.map(u => (
                 <Link key={u.id} to={`/${u.username}`} className="feed-right-nearby-item">
