@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/posts');
@@ -18,7 +19,6 @@ app.use(cors({
     if (/^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+)(:\d+)?$/.test(origin)) {
       return cb(null, true);
     }
-    // Allow Railway/Render production domains
     if (process.env.ALLOWED_ORIGIN && origin === process.env.ALLOWED_ORIGIN) {
       return cb(null, true);
     }
@@ -52,4 +52,26 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-app.listen(PORT, () => console.log(`🐾 Pawstagram server → http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🐾 Pawstagram server → http://localhost:${PORT}`);
+
+  // Seed demo data in background if DB is empty — doesn't block startup
+  try {
+    const db = require('./db/database');
+    const count = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
+    if (count < 10) {
+      console.log('🌱 Seeding demo data in background...');
+      const child = spawn(process.execPath, [path.join(__dirname, 'seed-demo.js')], {
+        cwd: __dirname,
+        stdio: 'inherit',
+      });
+      child.on('close', code =>
+        code === 0 ? console.log('✅ Demo seed complete') : console.error(`⚠️ Seed exited: ${code}`)
+      );
+    } else {
+      console.log(`✅ Database ready (${count} users)`);
+    }
+  } catch (e) {
+    console.error('⚠️ Seed check failed:', e.message);
+  }
+});
