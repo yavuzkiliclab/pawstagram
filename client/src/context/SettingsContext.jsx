@@ -4,18 +4,15 @@ const SettingsContext = createContext(null);
 
 const STORAGE_KEY = 'petcircle_settings';
 
-function getDefaultLanguage() {
-  try {
-    const browserLang = navigator.language || navigator.userLanguage || 'en';
-    return browserLang.startsWith('tr') ? 'tr' : 'en';
-  } catch {
-    return 'en';
-  }
-}
+const getSavedLang = () => {
+  const saved = localStorage.getItem('petcircle_language');
+  if (saved) return saved;
+  const browser = navigator.language || navigator.languages?.[0] || 'en';
+  return browser.toLowerCase().startsWith('tr') ? 'tr' : 'en';
+};
 
 const defaults = {
   theme: 'light',
-  language: 'en',
   petFilter: 'all',
   compact: false,
 };
@@ -413,22 +410,23 @@ export const COUNTRIES = [
 ];
 
 export function SettingsProvider({ children }) {
+  const [language, setLanguageState] = useState(getSavedLang);
   const [settings, setSettings] = useState(() => {
     try {
       const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      if (stored && stored.language) {
-        // User has a saved language preference — respect it
-        return { ...defaults, ...stored };
-      }
-      // No saved preference — detect from browser (tr→Turkish, else→English)
-      return { ...defaults, ...stored, language: getDefaultLanguage() };
-    } catch { return { ...defaults, language: getDefaultLanguage() }; }
+      return { ...defaults, ...stored };
+    } catch { return defaults; }
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', settings.theme);
     document.documentElement.classList.toggle('compact', settings.compact);
   }, [settings.theme, settings.compact]);
+
+  const setLanguage = useCallback((v) => {
+    localStorage.setItem('petcircle_language', v);
+    setLanguageState(v);
+  }, []);
 
   const updateSetting = useCallback((key, value) => {
     setSettings(prev => {
@@ -440,22 +438,22 @@ export function SettingsProvider({ children }) {
 
   // t(key) — returns translated string; supports {var} interpolation
   const t = useCallback((key, vars) => {
-    let str = translations[settings.language]?.[key] ?? translations.en[key] ?? key;
+    let str = translations[language]?.[key] ?? translations.en[key] ?? key;
     if (vars) {
       Object.entries(vars).forEach(([k, v]) => {
         str = str.replace(`{${k}}`, v);
       });
     }
     return str;
-  }, [settings.language]);
+  }, [language]);
 
   const value = {
     theme: settings.theme,
-    language: settings.language,
+    language,
     petFilter: settings.petFilter,
     compact: settings.compact,
     setTheme: (v) => updateSetting('theme', v),
-    setLanguage: (v) => updateSetting('language', v),
+    setLanguage,
     setPetFilter: (v) => updateSetting('petFilter', v),
     setCompact: (v) => updateSetting('compact', v),
     t,
