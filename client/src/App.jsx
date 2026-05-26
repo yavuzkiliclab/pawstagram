@@ -16,6 +16,7 @@ import EditProfile from './pages/EditProfile';
 import Notifications from './pages/Notifications';
 import Messages from './pages/Messages';
 import Search from './pages/Search';
+import Match from './pages/Match';
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth();
@@ -43,7 +44,7 @@ export default function App() {
           <Route path="/" element={<PrivateRoute><Layout><Feed /></Layout></PrivateRoute>} />
           <Route path="/explore" element={<PrivateRoute><Layout><Explore /></Layout></PrivateRoute>} />
           <Route path="/trending" element={<PrivateRoute><Layout><Trending /></Layout></PrivateRoute>} />
-          <Route path="/reels" element={<PrivateRoute><Layout><Reels /></Layout></PrivateRoute>} />
+          <Route path="/reels" element={<PrivateRoute><Navbar /><Reels /></PrivateRoute>} />
           <Route path="/stats" element={<PrivateRoute><Layout><Stats /></Layout></PrivateRoute>} />
           <Route path="/notifications" element={<PrivateRoute><Layout><Notifications /></Layout></PrivateRoute>} />
           <Route path="/new" element={<PrivateRoute><Layout><NewPost /></Layout></PrivateRoute>} />
@@ -52,6 +53,7 @@ export default function App() {
           <Route path="/messages" element={<PrivateRoute><Layout><Messages /></Layout></PrivateRoute>} />
           <Route path="/messages/:username" element={<PrivateRoute><Layout><Messages /></Layout></PrivateRoute>} />
           <Route path="/search" element={<PrivateRoute><Layout><Search /></Layout></PrivateRoute>} />
+          <Route path="/match" element={<PrivateRoute><Layout><Match /></Layout></PrivateRoute>} />
           <Route path="/:username" element={<PrivateRoute><Layout><Profile /></Layout></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

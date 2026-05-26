@@ -5,6 +5,7 @@ import { useSettings } from '../context/SettingsContext';
 import Post from '../components/Post';
 import Avatar from '../components/Avatar';
 import StoriesRow from '../components/StoriesRow';
+import StoryViewer from '../components/StoryViewer';
 import FilterBar from '../components/FilterBar';
 import api from '../api/axios';
 
@@ -25,12 +26,15 @@ export default function Feed() {
   const [petFilter, setPetFilter] = useState(savedFilter || 'all');
   const [trendingTags, setTrendingTags] = useState([]);
   const [nearby, setNearby] = useState([]);
+  const [storyGroups, setStoryGroups] = useState([]);
+  const [storyViewerIdx, setStoryViewerIdx] = useState(null);
 
   useEffect(() => { fetchFeed(1, true); }, [petFilter]);
   useEffect(() => {
     fetchSuggestions();
     api.get('/posts/trending-tags').then(r => setTrendingTags(r.data.slice(0, 8))).catch(() => {});
     api.get('/users/nearby').then(r => setNearby(r.data.slice(0, 4))).catch(() => {});
+    api.get('/stories/feed').then(r => setStoryGroups(r.data)).catch(() => {});
   }, []);
 
   const fetchFeed = async (p = 1, reset = false) => {
@@ -78,9 +82,16 @@ export default function Feed() {
 
   return (
     <div className="page-container">
+      {storyViewerIdx !== null && storyGroups.length > 0 && (
+        <StoryViewer
+          groups={storyGroups}
+          startIndex={storyViewerIdx}
+          onClose={() => setStoryViewerIdx(null)}
+        />
+      )}
       <div className="page-container-left" />
       <div className="feed-posts">
-        <StoriesRow />
+        <StoriesRow groups={storyGroups} onOpenViewer={setStoryViewerIdx} />
         <FilterBar value={petFilter} onChange={v => setPetFilter(v)} />
 
         {loading ? (

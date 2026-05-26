@@ -9,6 +9,8 @@ const userRoutes = require('./routes/users');
 const notifRoutes = require('./routes/notifications');
 const messageRoutes = require('./routes/messages');
 const statsRoutes = require('./routes/stats');
+const matchRoutes = require('./routes/match');
+const storiesRoutes = require('./routes/stories');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -40,6 +42,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notifRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/match', matchRoutes);
+app.use('/api/stories', storiesRoutes);
 
 // Serve built React app in production (must come after API routes)
 if (process.env.NODE_ENV === 'production') {

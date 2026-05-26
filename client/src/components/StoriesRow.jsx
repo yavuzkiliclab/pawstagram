@@ -1,53 +1,39 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../context/SettingsContext';
-import api from '../api/axios';
+import Avatar from './Avatar';
 
-export default function StoriesRow() {
-  const { user } = useAuth();
+export default function StoriesRow({ groups = [], onOpenViewer }) {
   const { t } = useSettings();
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
-
-  useEffect(() => {
-    api.get('/users/stories').then(r => setUsers(r.data)).catch(() => {});
-  }, []);
-
-  const getInitials = (u) => (u.full_name || u.username || '?')[0].toUpperCase();
-  const gradients = [
-    ['#FF3D9A','#FFB347'], ['#9B59FF','#FF3D9A'], ['#00D4FF','#9B59FF'],
-    ['#FF3D9A','#FF6EC7'], ['#00E5A0','#00D4FF'],
-  ];
 
   return (
     <div className="stories-row">
-      {/* New post button */}
+      {/* New story / post button */}
       <div className="story-item" onClick={() => navigate('/new')}>
-        <div className="story-ring new-post-ring">
-          <div className="story-inner" style={{ fontSize: 26, background: 'var(--bg3)' }}>+</div>
+        <div className="story-ring story-ring-new">
+          <div className="story-inner story-inner-new">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
         </div>
         <span className="story-label" style={{ color: 'var(--pink)', fontWeight: 600 }}>{t('newPost')}</span>
       </div>
 
-      {/* Followed users */}
-      {users.map((u, i) => {
-        const idx = i % gradients.length;
-        const [c1, c2] = gradients[idx];
-        return (
-          <div key={u.id} className="story-item" onClick={() => navigate(`/${u.username}`)}>
-            <div className="story-ring" style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}>
-              <div className="story-inner">
-                {u.avatar_url
-                  ? <img src={u.avatar_url} alt={u.username} />
-                  : <span style={{ fontSize: 20, fontWeight: 800 }}>{getInitials(u)}</span>
-                }
-              </div>
+      {groups.map((group, i) => (
+        <div
+          key={group.user_id || group.id}
+          className="story-item"
+          onClick={() => onOpenViewer(i)}
+        >
+          <div className={`story-ring ${group.has_unseen ? 'story-ring-unseen' : 'story-ring-seen'}`}>
+            <div className="story-inner">
+              <Avatar user={group} size={56} />
             </div>
-            <span className="story-label">{u.username}</span>
           </div>
-        );
-      })}
+          <span className="story-label">{group.username}</span>
+        </div>
+      ))}
     </div>
   );
 }

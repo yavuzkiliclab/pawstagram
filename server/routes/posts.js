@@ -9,7 +9,7 @@ function enrichPost(post, userId) {
   const liked = db.prepare('SELECT 1 FROM likes WHERE post_id=? AND user_id=?').get(post.id, userId);
   const like_count = db.prepare('SELECT COUNT(*) as c FROM likes WHERE post_id=?').get(post.id).c;
   const comment_count = db.prepare('SELECT COUNT(*) as c FROM comments WHERE post_id=?').get(post.id).c;
-  return { ...post, liked: !!liked, like_count, comment_count };
+  return { ...post, liked: !!liked, is_liked: !!liked, like_count, comment_count };
 }
 
 function createNotification(recipientId, senderId, type, postId = null) {
@@ -43,7 +43,7 @@ router.get('/feed', authMiddleware, (req, res) => {
 // Explore
 router.get('/explore', authMiddleware, (req, res) => {
   const page = parseInt(req.query.page) || 1;
-  const limit = 24, offset = (page - 1) * limit;
+  const limit = Math.min(parseInt(req.query.limit) || 24, 24), offset = (page - 1) * limit;
   const petWhere = buildPetWhere(req.query.pet_type);
   const tag = req.query.tag ? `%#${req.query.tag}%` : null;
   const tagWhere = tag ? ` AND p.caption LIKE '${tag.replace(/'/g, "''")}'` : '';

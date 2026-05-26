@@ -12,7 +12,7 @@ const getSavedLang = () => {
 };
 
 const defaults = {
-  theme: 'light',
+  theme: 'dark',
   petFilter: 'all',
   compact: false,
 };
@@ -204,6 +204,16 @@ const translations = {
     petDistTitle: '🐾 Evcil Hayvan Dağılımı',
     trendingTags: '🔥 Trend Etiketler',
     nearbyUsers: '📍 Yakınındakiler',
+    // Match
+    match: 'Eşleş',
+    matchTab: 'Eşleş',
+    matchesTab: 'Eşleşmeler',
+    matchLike: 'Beğen',
+    matchPass: 'Geç',
+    swipeHint: 'Sürükle veya butona bas',
+    noMoreCandidates: 'Şimdilik hepsi bu! Birazdan daha fazla evcil dost gelecek.',
+    refreshCandidates: 'Yenile',
+    noMatchesYet: 'Henüz eşleşme yok. Evcil dostlarla tanış! 💛',
   },
   en: {
     // Nav
@@ -390,6 +400,16 @@ const translations = {
     petDistTitle: '🐾 Pet Distribution',
     trendingTags: '🔥 Trending Tags',
     nearbyUsers: '📍 Nearby',
+    // Match
+    match: 'Match',
+    matchTab: 'Match',
+    matchesTab: 'Matches',
+    matchLike: 'Like',
+    matchPass: 'Pass',
+    swipeHint: 'Swipe or use the buttons',
+    noMoreCandidates: "That's everyone for now! More furry friends coming soon.",
+    refreshCandidates: 'Refresh',
+    noMatchesYet: 'No matches yet. Start swiping! 💛',
   },
 };
 

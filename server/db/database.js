@@ -121,6 +121,61 @@ const migrations = [
   "ALTER TABLE users ADD COLUMN pet_traits TEXT DEFAULT ''",
   "ALTER TABLE users ADD COLUMN pet_lineage TEXT DEFAULT ''",
   "ALTER TABLE users ADD COLUMN pet_awards TEXT DEFAULT ''",
+  `CREATE TABLE IF NOT EXISTS pet_swipes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    swiper_id INTEGER NOT NULL,
+    target_id INTEGER NOT NULL,
+    direction TEXT NOT NULL CHECK(direction IN ('like','pass')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(swiper_id, target_id),
+    FOREIGN KEY (swiper_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS pet_matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_a_id INTEGER NOT NULL,
+    user_b_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_a_id, user_b_id),
+    FOREIGN KEY (user_a_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_b_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    image_url TEXT NOT NULL,
+    caption TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME DEFAULT (datetime('now', '+24 hours')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS story_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    story_id INTEGER NOT NULL,
+    viewer_id INTEGER NOT NULL,
+    viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(story_id, viewer_id),
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+    FOREIGN KEY (viewer_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS story_likes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    story_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(story_id, user_id),
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS story_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    story_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (story_id) REFERENCES stories(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
 ];
 for (const sql of migrations) {
   try { db.exec(sql); } catch {}
