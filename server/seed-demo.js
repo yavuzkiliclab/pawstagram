@@ -553,7 +553,7 @@ const USER_TYPES = [
 // ---------------------------------------------------------------------------
 function clearDatabase() {
   process.stdout.write('Clearing existing data...');
-  const tables = ['messages', 'conversations', 'notifications', 'follows', 'comments', 'likes', 'posts', 'users'];
+  const tables = ['story_comments', 'story_likes', 'story_views', 'stories', 'messages', 'conversations', 'notifications', 'follows', 'comments', 'likes', 'posts', 'users'];
   for (const t of tables) {
     try { db.prepare(`DELETE FROM ${t}`).run(); } catch {}
   }
@@ -1018,6 +1018,37 @@ function seedWhiskerMomData(allUsers) {
 }
 
 // ---------------------------------------------------------------------------
+// Stories (1-2 per user, expire in 48h so they're valid after deploy)
+// ---------------------------------------------------------------------------
+function seedStories(users) {
+  process.stdout.write('Inserting stories...');
+  const stmt = db.prepare(`
+    INSERT INTO stories (user_id, image_url, caption, created_at, expires_at)
+    VALUES (@user_id, @image_url, @caption, @created_at, @expires_at)
+  `);
+  const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString().replace('T', ' ').slice(0, 19);
+  let total = 0;
+  let imgCounter = 500;
+  db.transaction(() => {
+    for (const user of users) {
+      const count = randInt(1, 2);
+      const d = petData[user.pet_type] || petData.cat;
+      for (let s = 0; s < count; s++) {
+        stmt.run({
+          user_id: user.id,
+          image_url: getPostImage(user.pet_type, imgCounter++),
+          caption: Math.random() > 0.4 ? pickRandom(d.captions || ['#petlife']) : null,
+          created_at: daysAgo(0),
+          expires_at: expiresAt,
+        });
+        total++;
+      }
+    }
+  })();
+  console.log(` done (${total} stories).`);
+}
+
+// ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
 function main() {
@@ -1041,6 +1072,7 @@ function main() {
 
   const allUsers = db.prepare('SELECT id, pet_name, pet_type FROM users ORDER BY id').all();
   seedWhiskerMomData(allUsers);
+  seedStories(allUsers);
 
   const uCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
   const pCount = db.prepare('SELECT COUNT(*) AS c FROM posts').get().c;
@@ -1049,6 +1081,7 @@ function main() {
   const fCount = db.prepare('SELECT COUNT(*) AS c FROM follows').get().c;
   const mCount = db.prepare('SELECT COUNT(*) AS c FROM messages').get().c;
   const nCount = db.prepare('SELECT COUNT(*) AS c FROM notifications').get().c;
+  const sCount = db.prepare('SELECT COUNT(*) AS c FROM stories').get().c;
 
   const wStats = db.prepare(`
     SELECT
@@ -1063,6 +1096,7 @@ function main() {
   console.log('\n=== Seed Complete ===');
   console.log(`  Users         : ${uCount}`);
   console.log(`  Posts         : ${pCount}`);
+  console.log(`  Stories       : ${sCount}`);
   console.log(`  Likes         : ${lCount}`);
   console.log(`  Comments      : ${cCount}`);
   console.log(`  Follows       : ${fCount}`);
